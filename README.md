@@ -1,5 +1,7 @@
 # Track History Card
 
+Fork of [sergon2000/lovelace-track-history-card](https://github.com/sergon2000/lovelace-track-history-card) with configurable light/dark tile providers and API-key support.
+
 A custom Lovelace card for [Home Assistant](https://www.home-assistant.io/) that displays the GPS movement history of any `device_tracker` entity on an interactive map for a selected day.
 
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2023.0%2B-blue)
@@ -42,13 +44,13 @@ A custom Lovelace card for [Home Assistant](https://www.home-assistant.io/) that
 
 1. Open **HACS**
 2. Click the three-dot menu → **Custom repositories**
-3. Add `https://github.com/sergon2000/lovelace-track-history-card` with type **Dashboard** (shown as **Lovelace** in older HACS versions)
+3. Add `https://github.com/FeKgr/lovelace-track-history-card` with type **Dashboard** (shown as **Lovelace** in older HACS versions)
 4. Search for **Track History Card** and install it
 5. Reload your browser
 
 ### Manual
 
-1. Download `track-history-card.js` from the [latest release](https://github.com/sergon2000/lovelace-track-history-card/releases)
+1. Download `track-history-card.js` from [this fork](https://github.com/FeKgr/lovelace-track-history-card/blob/main/track-history-card.js) using the raw-file download button
 2. Create the folder `/config/www/community/lovelace-track-history-card/` if it does not exist, then copy the file there
 3. In Home Assistant go to **Settings → Dashboards → Resources**
 4. Add `/local/community/lovelace-track-history-card/track-history-card.js` as type **JavaScript module**
@@ -114,6 +116,56 @@ reverse_geocode: false
 | `geocode_url` | `string` | Nominatim | Reverse-geocoding endpoint. Defaults to the public [Nominatim](https://nominatim.org/) service; may point at any Nominatim-compatible reverse endpoint (e.g. [LocationIQ](https://locationiq.com/) or a self-hosted instance). Only used when `reverse_geocode` is `true`. |
 
 > See [CLUSTERING.md](CLUSTERING.md) for a detailed explanation of how points are grouped into stops, how the line is smoothed, and how stray points are handled.
+
+### Map tile providers (YAML)
+
+Both themes now default to CARTO tiles: Positron (`light_all`) for light mode and
+Dark Matter (`dark_all`) for dark mode. Existing configurations need no changes.
+This avoids the OpenStreetMap public tile endpoint that can return HTTP 403 in
+some Home Assistant clients. It does not bypass provider policies or guarantee
+availability; use a provider/account whose terms cover your usage.
+
+Override either or both themes with `tile_layers`. Omitted themes retain CARTO.
+A custom URL must contain `{z}`, `{x}`, and `{y}`. Leaflet also supports `{s}` for
+subdomains and `{r}` for retina tiles. Supply the attribution required by your
+provider (HTML links are supported).
+
+```yaml
+theme: system
+tile_api_key: "YOUR_BROWSER_TILE_API_KEY"
+tile_layers:
+  light:
+    url: "https://YOUR_TILE_HOST/light/{z}/{x}/{y}.png?key={api_key}"
+    attribution: "YOUR_PROVIDER_REQUIRED_ATTRIBUTION"
+    max_zoom: 19
+  dark:
+    url: "https://YOUR_TILE_HOST/dark/{z}/{x}/{y}.png?key={api_key}"
+    attribution: "YOUR_PROVIDER_REQUIRED_ATTRIBUTION"
+    max_zoom: 19
+```
+
+Replace the example host, paths and attribution with your provider's **raster XYZ**
+tile configuration; vector/style JSON URLs are not supported. `{api_key}` is
+URL-encoded before substitution. A theme's optional `api_key` overrides the shared
+`tile_api_key`. No key is needed for default CARTO tiles or custom URLs without
+`{api_key}`. Optional `subdomains` accepts a string such as `abc` or a list;
+`max_zoom` defaults to 19 and accepts integers from 0 to 24.
+
+These settings are YAML-only and are preserved by the visual editor. `system`
+updates the tile layer as Home Assistant changes theme, without reloading history.
+Credentials are client-side configuration, visible to dashboard users and in
+network requests: use a browser/public key and your provider's supported key
+restrictions, never a server secret. `geocode_url` still controls only reverse
+geocoding and does not change map tiles.
+
+To try a patched file manually, replace the installed `track-history-card.js`,
+then change the existing dashboard resource URL to
+`/local/community/lovelace-track-history-card/track-history-card.js?v=custom-tiles-1`
+and hard-refresh. Do not load the original and patched card simultaneously.
+HACS updates from the original repository may overwrite a manual replacement.
+
+Developer checks: `node --check track-history-card.js` and
+`node --test tests/tiles.test.cjs` (Node 18+).
 
 ### Reverse geocoding
 
