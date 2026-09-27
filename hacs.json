@@ -1,4 +1,5 @@
 {
-  "name": "Track History Card",
-  "render_readme": true
+  "name": "Track History Plus",
+  "render_readme": true,
+  "filename": "track-history-plus-card.js"
 }

@@ -7,8 +7,8 @@ const context = vm.createContext({
   HTMLElement: class {}, window: {},
   customElements: { define: (name, value) => elements.set(name, value) },
 });
-vm.runInContext(readFileSync(require('node:path').join(__dirname, '../track-history-card.js'), 'utf8'), context);
-const Card = elements.get('lovelace-track-history-card');
+vm.runInContext(readFileSync(require('node:path').join(__dirname, '../track-history-plus-card.js'), 'utf8'), context);
+const Card = elements.get('track-history-plus-card');
 function card(config = {}) {
   const c = Object.create(Card.prototype);
   c._config = { theme: 'system', ...config };

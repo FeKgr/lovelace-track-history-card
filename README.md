@@ -1,4 +1,4 @@
-# Track History Card
+# Track History Plus
 
 Fork of [sergon2000/lovelace-track-history-card](https://github.com/sergon2000/lovelace-track-history-card) with configurable light/dark tile providers and API-key support.
 
@@ -45,15 +45,15 @@ A custom Lovelace card for [Home Assistant](https://www.home-assistant.io/) that
 1. Open **HACS**
 2. Click the three-dot menu → **Custom repositories**
 3. Add `https://github.com/FeKgr/lovelace-track-history-card` with type **Dashboard** (shown as **Lovelace** in older HACS versions)
-4. Search for **Track History Card** and install it
+4. Search for **Track History Plus** and install it
 5. Reload your browser
 
 ### Manual
 
-1. Download `track-history-card.js` from [this fork](https://github.com/FeKgr/lovelace-track-history-card/blob/main/track-history-card.js) using the raw-file download button
+1. Download `track-history-plus-card.js` from [this fork](https://github.com/FeKgr/lovelace-track-history-card/blob/main/track-history-plus-card.js) using the raw-file download button
 2. Create the folder `/config/www/community/lovelace-track-history-card/` if it does not exist, then copy the file there
 3. In Home Assistant go to **Settings → Dashboards → Resources**
-4. Add `/local/community/lovelace-track-history-card/track-history-card.js` as type **JavaScript module**
+4. Add `/local/community/lovelace-track-history-card/track-history-plus-card.js` as type **JavaScript module**
 5. Reload your browser
 
 ---
@@ -77,7 +77,7 @@ The card supports a **visual editor** — click the pencil icon after adding the
 Alternatively, configure it manually via YAML:
 
 ```yaml
-type: custom:lovelace-track-history-card
+type: custom:track-history-plus-card
 title: "Daily Movements"
 entities:
   - device_tracker.john_phone
@@ -158,13 +158,30 @@ network requests: use a browser/public key and your provider's supported key
 restrictions, never a server secret. `geocode_url` still controls only reverse
 geocoding and does not change map tiles.
 
-To try a patched file manually, replace the installed `track-history-card.js`,
-then change the existing dashboard resource URL to
-`/local/community/lovelace-track-history-card/track-history-card.js?v=custom-tiles-1`
-and hard-refresh. Do not load the original and patched card simultaneously.
-HACS updates from the original repository may overwrite a manual replacement.
+### Updating from the original or the earlier fork
 
-Developer checks: `node --check track-history-card.js` and
+The fork is named **Track History Plus** in HACS and the Home Assistant card picker.
+It registers `track-history-plus-card` and its own editor, separately from the
+original card. Change only the type in your existing dashboard YAML:
+
+```yaml
+type: custom:track-history-plus-card
+```
+
+All other card settings remain the same. After downloading this version, ensure
+the fork's JavaScript module resource points to
+`/hacsfiles/lovelace-track-history-card/track-history-plus-card.js`
+(or `/local/community/lovelace-track-history-card/track-history-plus-card.js`
+for a manual installation). Replace the old fork resource entry, then hard-refresh
+(Ctrl/Cmd+Shift+R). If needed, append `?v=plus-1` to the new resource URL.
+The GitHub repository URL is unchanged.
+
+For manual side-by-side use, keep the original and fork files in separate folders
+and register each JavaScript module once. Their custom-element names are distinct.
+Do not rely on two HACS repositories with the same repository basename to manage
+separate installation folders; use a separate manual folder for one of them.
+
+Developer checks: `node --check track-history-plus-card.js` and
 `node --test tests/tiles.test.cjs` (Node 18+).
 
 ### Reverse geocoding

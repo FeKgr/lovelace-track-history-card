@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Project memory for the **Track History Card** — a custom Lovelace card for Home
+Project memory for the **Track History Plus** — a custom Lovelace card for Home
 Assistant that shows a `device_tracker`'s movement history on a Leaflet map for a
 selected day. This file captures context and hard-won gotchas so they don't have
 to be rediscovered. Keep it updated as the project evolves.
@@ -17,19 +17,19 @@ to be rediscovered. Keep it updated as the project evolves.
 
 | File                   | Purpose                                                        |
 |------------------------|---------------------------------------------------------------|
-| `track-history-card.js`| The entire card — single file, no build step.                 |
+| `track-history-plus-card.js`| The entire card — single file, no build step.                 |
 | `README.md`            | User-facing docs (features, install, config options, usage).  |
 | `CLUSTERING.md`        | Detailed clustering & rendering logic. Update when that logic changes. |
 | `CLAUDE.md`            | This file.                                                     |
 | `hacs.json`            | HACS metadata.                                                 |
 | `card.png`             | README screenshot (repo root; sourced from the user's Google Drive). |
 
-## Architecture (`track-history-card.js`)
+## Architecture (`track-history-plus-card.js`)
 
 Two custom elements:
 
-- **`lovelace-track-history-card`** (`class LovelaceTrackHistoryCard`) — the card.
-- **`lovelace-track-history-card-editor`** (`class LovelaceTrackHistoryCardEditor`)
+- **`track-history-plus-card`** (`class TrackHistoryPlusCard`) — the card.
+- **`track-history-plus-card-editor`** (`class TrackHistoryPlusCardEditor`)
   — the visual editor (`getConfigElement()` returns it).
 
 Both use Shadow DOM. Leaflet (1.9.4) is loaded once from unpkg
@@ -175,7 +175,7 @@ shadowRoot (`_injectLeafletCss`).
 ## Testing tips
 
 - The user runs the card in a real HA instance. The fastest test loop is to copy
-  `track-history-card.js` to
+  `track-history-plus-card.js` to
   `/config/www/community/lovelace-track-history-card/track-history-card.js` and
   hard-refresh.
 - **Browser caching is a recurring trap** — when changes don't show, bump the
@@ -190,3 +190,8 @@ shadowRoot (`_injectLeafletCss`).
 - `_tileConfig` validates both themes in setConfig; `_ensureTileLayer` caches
   the full resolved settings, and the hass setter refreshes system theme tiles.
 - Regression checks: `node --test tests/tiles.test.cjs`.
+
+### Fork identity
+- Display name: Track History Plus; card type: `custom:track-history-plus-card`.
+- HACS filename: `track-history-plus-card.js`; the repository URL is unchanged.
+- The old element name is intentionally not registered as an alias.
