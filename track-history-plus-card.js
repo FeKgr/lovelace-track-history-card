@@ -1,10 +1,10 @@
 /**
- * lovelace-track-history-card
+ * track-history-plus-card
  * Lovelace card for Home Assistant — shows device_tracker movement on a map for a selected day.
  * Install via HACS → Frontend → Custom repositories.
  *
  * Config example:
- *   type: custom:lovelace-track-history-card
+ *   type: custom:track-history-plus-card
  *   title: "Movimientos"
  *   entities:
  *     - device_tracker.john_phone
@@ -310,7 +310,7 @@ function ensureLeaflet() {
 
 // ────────────────────────────────────────────────────────────────────────────
 
-class LovelaceTrackHistoryCard extends HTMLElement {
+class TrackHistoryPlusCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -334,7 +334,7 @@ class LovelaceTrackHistoryCard extends HTMLElement {
   // ── HA lifecycle ──────────────────────────────────────────────────────────
 
   static getConfigElement() {
-    return document.createElement('lovelace-track-history-card-editor');
+    return document.createElement('track-history-plus-card-editor');
   }
 
   static getStubConfig() {
@@ -350,7 +350,7 @@ class LovelaceTrackHistoryCard extends HTMLElement {
 
   setConfig(config) {
     if (!config.entities || !Array.isArray(config.entities) || config.entities.length === 0) {
-      throw new Error('[lovelace-track-history-card] "entities" must be a non-empty list of device_tracker entity IDs.');
+      throw new Error('[track-history-plus-card] "entities" must be a non-empty list of device_tracker entity IDs.');
     }
     this._config = {
       default_entity: null,
@@ -862,7 +862,7 @@ class LovelaceTrackHistoryCard extends HTMLElement {
         this._enrichLocations(displayed, gen);
       }
     } catch (err) {
-      console.error('[lovelace-track-history-card]', err);
+      console.error('[track-history-plus-card]', err);
       this._setAlert(`${this._t('error')}: ${err.message}`, 'error');
     } finally {}
   }
@@ -942,7 +942,7 @@ class LovelaceTrackHistoryCard extends HTMLElement {
 
   // YAML-only overrides keep provider credentials out of the visual editor.
   _tileConfig(theme) {
-    const fail = message => { throw new Error(`[lovelace-track-history-card] ${message}`); };
+    const fail = message => { throw new Error(`[track-history-plus-card] ${message}`); };
     const layers = this._config.tile_layers ?? {};
     if (typeof layers !== 'object' || Array.isArray(layers)) fail('tile_layers must be an object.');
     const custom = layers[theme];
@@ -1897,7 +1897,7 @@ class LovelaceTrackHistoryCard extends HTMLElement {
 
 // ── Visual config editor ──────────────────────────────────────────────────────
 
-class LovelaceTrackHistoryCardEditor extends HTMLElement {
+class TrackHistoryPlusCardEditor extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -2320,16 +2320,16 @@ class LovelaceTrackHistoryCardEditor extends HTMLElement {
   }
 }
 
-customElements.define('lovelace-track-history-card-editor', LovelaceTrackHistoryCardEditor);
+customElements.define('track-history-plus-card-editor', TrackHistoryPlusCardEditor);
 
 // ── Registration ──────────────────────────────────────────────────────────────
 
-customElements.define('lovelace-track-history-card', LovelaceTrackHistoryCard);
+customElements.define('track-history-plus-card', TrackHistoryPlusCard);
 
 window.customCards ??= [];
 window.customCards.push({
-  type:        'lovelace-track-history-card',
-  name:        'Track History Card',
-  description: 'Shows device_tracker movement history on a map for a selected day.',
+  type:        'track-history-plus-card',
+  name:        'Track History Plus',
+  description: 'Movement history with custom map providers and API keys (FeKgr fork).',
   preview:     false,
 });
