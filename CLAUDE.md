@@ -182,3 +182,11 @@ shadowRoot (`_injectLeafletCss`).
   `?v=` query on the dashboard resource and hard-refresh (Ctrl/Cmd+Shift+R).
 - WebSocket calls don't appear as request rows in the Network tab — they're
   messages under the `websocket` connection.
+
+### Configurable map tiles
+- Both themes default to CARTO; `tile_layers.light` / `.dark` allow YAML-only
+  raster XYZ URL, attribution, max_zoom, subdomains, and api_key overrides.
+- `tile_api_key` supplies a shared browser key; theme keys take precedence.
+- `_tileConfig` validates both themes in setConfig; `_ensureTileLayer` caches
+  the full resolved settings, and the hass setter refreshes system theme tiles.
+- Regression checks: `node --test tests/tiles.test.cjs`.

@@ -367,6 +367,9 @@ class LovelaceTrackHistoryCard extends HTMLElement {
     if (this._config.arrow_count != null) {
       this._config.arrow_count  = this._clampNum(this._config.arrow_count,     LIMITS.arrow_count);
     }
+    // Validate both themes before replacing the current card.
+    this._tileConfig('light');
+    this._tileConfig('dark');
     this._build();
     // Redraw the map on config changes (e.g. from the visual editor) once
     // hass is available and the first load has already happened.
@@ -383,6 +386,7 @@ class LovelaceTrackHistoryCard extends HTMLElement {
   set hass(hass) {
     const langChanged = getLang(this._hass) !== getLang(hass);
     this._hass = hass;
+    if (this._map && this._L && this._config) this._ensureTileLayer(this._L);
     if (langChanged && this._config) {
       this._destroyMap();
       this._build();
@@ -936,29 +940,55 @@ class LovelaceTrackHistoryCard extends HTMLElement {
     return this._hass?.themes?.darkMode ? 'dark' : 'light';
   }
 
-  // Add the tile layer to the (reused) map, rebuilding it only when the theme
-  // actually changes so the tiles aren't needlessly reloaded on every redraw.
+  // YAML-only overrides keep provider credentials out of the visual editor.
+  _tileConfig(theme) {
+    const fail = message => { throw new Error(`[lovelace-track-history-card] ${message}`); };
+    const layers = this._config.tile_layers ?? {};
+    if (typeof layers !== 'object' || Array.isArray(layers)) fail('tile_layers must be an object.');
+    const custom = layers[theme];
+    if (custom != null && (typeof custom !== 'object' || Array.isArray(custom))) {
+      fail(`tile_layers.${theme} must be an object.`);
+    }
+    const layer = custom ?? {};
+    const isCustom = layer.url != null;
+    let url = isCustom ? layer.url
+      : `https://{s}.basemaps.cartocdn.com/${theme === 'dark' ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`;
+    if (typeof url !== 'string' || !/^https?:\/\//i.test(url) ||
+        !['{z}', '{x}', '{y}'].every(token => url.includes(token))) {
+      fail(`tile_layers.${theme}.url must be an HTTP(S) XYZ tile URL containing {z}, {x} and {y}.`);
+    }
+    const attribution = layer.attribution ?? (isCustom ? ''
+      : '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>');
+    if (typeof attribution !== 'string' || !attribution.trim()) {
+      fail(`tile_layers.${theme}.attribution is required for a custom URL.`);
+    }
+    if (url.includes('{api_key}')) {
+      const key = layer.api_key ?? this._config.tile_api_key;
+      if (typeof key !== 'string' || !key.trim()) fail(`An API key is required for tile_layers.${theme}.url.`);
+      url = url.replaceAll('{api_key}', encodeURIComponent(key));
+    }
+    const maxZoom = layer.max_zoom ?? 19;
+    if (!Number.isInteger(maxZoom) || maxZoom < 0 || maxZoom > 24) {
+      fail(`tile_layers.${theme}.max_zoom must be an integer from 0 to 24.`);
+    }
+    const subdomains = layer.subdomains ?? (isCustom ? 'abc' : 'abcd');
+    if (typeof subdomains !== 'string' &&
+        !(Array.isArray(subdomains) && subdomains.every(s => typeof s === 'string'))) {
+      fail(`tile_layers.${theme}.subdomains must be a string or a list of strings.`);
+    }
+    return { url, options: { attribution, subdomains, maxZoom, keepBuffer: 6 } };
+  }
+
+  // Reuse tiles unless the actual provider settings change, including API keys.
   _ensureTileLayer(L) {
-    const theme = this._resolveTheme();
-    if (this._tileLayer && this._tileTheme === theme) return;
+    const tile = this._tileConfig(this._resolveTheme());
+    const signature = JSON.stringify(tile);
+    if (this._tileLayer && this._tileSignature === signature) return;
+    const next = L.tileLayer(tile.url, tile.options);
     if (this._tileLayer) this._map.removeLayer(this._tileLayer);
-    // keepBuffer holds more off-screen tiles so panning/zooming to a new day or
-    // device reuses cached tiles instead of flashing the empty background while
-    // fresh ones load (fade animations are off, so there's no cross-fade).
-    this._tileLayer = theme === 'dark'
-      ? L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
-          subdomains: 'abcd',
-          maxZoom: 19,
-          keepBuffer: 6,
-        })
-      : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          maxZoom: 19,
-          keepBuffer: 6,
-        });
-    this._tileLayer.addTo(this._map);
-    this._tileTheme = theme;
+    next.addTo(this._map);
+    this._tileLayer = next;
+    this._tileSignature = signature;
   }
 
   _drawTrack(L, points) {
@@ -1406,7 +1436,7 @@ class LovelaceTrackHistoryCard extends HTMLElement {
     this._stopLayer = null;
     this._stopNodes = null;
     this._tileLayer = null;
-    this._tileTheme = null;
+    this._tileSignature = null;
     this._geoQueue = [];
     this._geoResolved = new Map();
     this._geoMarkers = new Map();
